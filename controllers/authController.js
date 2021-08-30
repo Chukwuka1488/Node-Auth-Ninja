@@ -1,13 +1,25 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const { response } = require('express');
 
 // handle errors
 const handleErrors = (err) => {
   console.log(err.message, err.code);
   let errors = { email: '', password: '' };
 
-  // unique values error code
+  // incorrect email
+  if (err.message === 'incorrect email or password') {
+    errors.email = 'the email or password is incorrect';
+  }
+
+  // incorrect email
+  if (err.message === 'incorrect email or password') {
+    errors.password = 'the email or password is incorrect';
+  }
+
   if (err.code === 11000) {
-    errors.email = 'that email is already registered';
+    // unique values error code
+    errors.email = 'this email is already registered';
     return errors;
   }
 
@@ -19,6 +31,15 @@ const handleErrors = (err) => {
   }
 
   return errors;
+};
+
+const maxAge = 3 * 24 * 60 * 60;
+
+// create tokens
+const createToken = (id) => {
+  return jwt.sign({ id }, 'haykay secret', {
+    expiresIn: maxAge,
+  });
 };
 
 // to render the sign up page
@@ -37,25 +58,29 @@ module.exports.signup_post = async (req, res) => {
 
   try {
     const user = await User.create({ email, password });
-    res.status(201).json(user);
+    const token = createToken(user._id);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+    res.status(201).json({ user: user._id });
   } catch (err) {
     const errors = handleErrors(err);
     res.status(400).json({ errors });
   }
 };
 
-module.exports.login_post = (req, res) => {
+module.exports.login_post = async (req, res) => {
   // console.log(req.body);
 
   const { email, password } = req.body;
 
-  // try {
-  //   const user = await User.create({ email, password });
-  //   res.status(201).json(user);
-  // } catch (error) {
-  //   console.log(error);
-  //   res.status(400).send('error, user not created');
-  // }
+  try {
+    const user = await User.login(email, password);
+    const token = createToken(user._id);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+    res.status(200).json({ user: user._id });
+  } catch (err) {
+    const errors = handleErrors(err);
+    res.status(400).json({ errors });
+  }
 
   // console.log(email, password);
   // res.send('user login');

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
+const { requireAuth } = require('./middleware/authMiddleware');
 
 const app = express();
 dotenv.config();
@@ -33,27 +34,7 @@ mongoose
 
 // routes
 app.get('/', (req, res) => res.render('home'));
-app.get('/smoothies', (req, res) => res.render('smoothies'));
+app.get('/smoothies', requireAuth, (req, res) => res.render('smoothies'));
 app.use(authRoutes);
 
 // cookies
-app.get('/set-cookies', (req, res) => {
-  // res.setHeader('Set-Cookie', 'newUser=true');
-  const one_day = 1000 * 60 * 60 * 24;
-  res.cookie('newUser', false);
-  res.cookie('isEmployee', true, {
-    maxAge: one_day,
-    httpOnly: true,
-    secure: true,
-  });
-
-  res.send('you got the cookies');
-});
-
-app.get('/read-cookies', (req, res) => {
-  const cookies = req.cookies;
-
-  console.log(cookies.newUser);
-
-  res.json(cookies);
-});

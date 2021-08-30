@@ -79,7 +79,13 @@ button{
   display: block;
   padding: 10px 16px;
   letter-spacing: 2px;
+  
 }
+
+button:hover{background-color:orange;}
+
+button:focus{background-color:red;}
+
 .error{
   color: #ff0099;
   margin: 10px 2px;
